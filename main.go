@@ -11,7 +11,8 @@ func main() {
 	s.Push(100)
 	fmt.Println(s)
 	s.Push(200)
+	t := *&s
+	t.Push(300)
+	fmt.Println(t)
 	fmt.Println(s)
-	last := s.Pop()
-	fmt.Println(last, s)
 }

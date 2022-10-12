@@ -35,8 +35,38 @@ func TestStack_Pop(t *testing.T) {
 	}
 
 	for i := len(args) - 1; i >= 0; i-- {
-		if stack.Pop() != args[i] {
-			t.Errorf("stack.Pop() = %s, want %s", stack.Pop(), args[i])
+		item, ok := stack.Pop()
+		if !ok {
+			t.Errorf("stack.Pop() = false, want true")
+		}
+		if item != args[i] {
+			t.Errorf("stack.Pop() = %s, want %s", item, args[i])
+		}
+	}
+}
+
+func TestStack_Pop_Empty(t *testing.T) {
+	stack := NewStack[string]()
+	_, ok := stack.Pop()
+	if ok {
+		t.Errorf("stack.Pop() = true, want false")
+	}
+}
+
+func TestStack_Clone(t *testing.T) {
+	stack := NewStack[int]()
+	args := [3]int{100, 200, 300}
+
+	for _, arg := range args {
+		stack.Push(arg)
+	}
+
+	clone := stack.Clone()
+	for range args {
+		cItem, _ := clone.Pop()
+		sItem, _ := stack.Pop()
+		if cItem != sItem {
+			t.Errorf("clone.Pop() != stack.Pop(), %d != %d", cItem, sItem)
 		}
 	}
 }
