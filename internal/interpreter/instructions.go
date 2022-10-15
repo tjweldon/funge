@@ -129,7 +129,7 @@ var instructionMap = [instructionCount]instruction{
 	ReadChr:          '~',
 }
 
-func (id InstructionId) NewDelta(stack *util.Stack[rune]) IPointerDelta {
+func (id InstructionId) NewDelta(stack *FungeStack) IPointerDelta {
 	switch id {
 	case MoveNorth:
 		return North()
@@ -158,6 +158,11 @@ func (id InstructionId) NewDelta(stack *util.Stack[rune]) IPointerDelta {
 	}
 
 	return IPointerDelta{}
+}
+
+// Rune returns the rune value associated with this InstructionId
+func (id InstructionId) Rune() rune {
+    return rune(instructionMap[id])
 }
 
 var inverseLookup = make(map[rune]InstructionId)

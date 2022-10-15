@@ -7,8 +7,8 @@ type Interpreter struct {
 	stringMode         bool
 	stopped            bool
 	instructionPointer *InstructionPointer
-	stack              util.Stack[rune]
-	space              FungeSpace
+	stack              *FungeStack
+    space              FungeSpace
 }
 
 // NewInterpreter returns a new Interpreter
@@ -51,9 +51,7 @@ func (i *Interpreter) Tick() bool {
 }
 
 func (i *Interpreter) translate() {
-	i.instructionPointer.location = i.instructionPointer.location.Translate(
-		i.instructionPointer.delta,
-	)
+	i.instructionPointer.Move()
 }
 
 // execute executes the given instruction
@@ -73,7 +71,7 @@ func (i *Interpreter) execute(instruction instruction) (stop bool) {
 	}
 
 	if instructionId >= IPMovementStart && instructionId <= IPMovementStart {
-		i.setDelta(instructionId.NewDelta(&i.stack))
+		i.setDelta(instructionId.NewDelta(i.stack))
 		return
 	}
 
