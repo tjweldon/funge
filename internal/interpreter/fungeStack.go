@@ -36,7 +36,7 @@ func (fs *FungeStack) ExecuteInstruction(instructionId InstructionId) {
 	case Swap:
 		fs.Swap()
 	case Pop:
-		_  = fs.Pop()
+		_ = fs.Pop()
 	}
 }
 
@@ -49,6 +49,6 @@ func (fs *FungeStack) evalBinaryOp(operation BinOp) {
 
 func (fs *FungeStack) evalUnaryOp(operation UnOp) {
 	val := fs.Pop()
-	
+
 	fs.Push(operation(val))
 }

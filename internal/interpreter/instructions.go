@@ -154,7 +154,6 @@ func (id InstructionId) NewDelta(stack *FungeStack) IPointerDelta {
 	case MoveRandom:
 		return Random()
 	}
-	
 
 	return IPointerDelta{}
 }

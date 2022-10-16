@@ -58,11 +58,10 @@ func Random() IPointerDelta {
 	return choices[idx]
 }
 
-
 type InstructionPointer struct {
 	location IPointerLocation
 	delta    IPointerDelta
-	size 	 tuple[int32]
+	size     tuple[int32]
 }
 
 // newInstructionPointer returns a new Instruction pointer at (0, 0) with delta (0, 1)
@@ -70,7 +69,7 @@ func newInstructionPointer(size tuple[int32]) *InstructionPointer {
 	return &InstructionPointer{
 		location: IPointerLocation{0, 0},
 		delta:    East(),
-		size: size,
+		size:     size,
 	}
 }
 

@@ -69,8 +69,10 @@ func (i *Interpreter) Tick() (bool, Instruction) {
 
 // Run executes the next Instruction until the interpreter stops.
 func (i *Interpreter) Run() {
-	debugFuncs := struct {silent, verbose func(i *Interpreter, ctx ...any)} {
-		silent: func(*Interpreter, ...any){},
+	debugFuncs := struct {
+		silent, verbose func(i *Interpreter, ctx ...any)
+	}{
+		silent: func(*Interpreter, ...any) {},
 		verbose: func(i *Interpreter, ctx ...any) {
 			fmt.Println("instruction", ctx)
 			fmt.Println("AFTER TICK")
@@ -88,10 +90,10 @@ func (i *Interpreter) Run() {
 func (i *Interpreter) run(debugOut func(*Interpreter, ...any)) {
 	var (
 		stopped bool
-		inst Instruction
+		inst    Instruction
 	)
 	stopped, inst = i.Tick()
-	
+
 	for !stopped {
 		debugOut(i, inst)
 		stopped, inst = i.Tick()
@@ -169,14 +171,21 @@ func (i *Interpreter) execute(instruction Instruction) (stop bool) {
 func (i *Interpreter) get() {
 	yCoord := i.stack.Pop()
 	xCoord := i.stack.Pop()
-	i.stack.Push(i.space.Get(InstructionPointer{location: IPointerLocation{xCoord, yCoord}}))
+	i.stack.Push(
+		i.space.Get(
+			InstructionPointer{location: IPointerLocation{xCoord, yCoord}},
+		),
+	)
 }
 
 func (i *Interpreter) put() {
 	yCoord := i.stack.Pop()
 	xCoord := i.stack.Pop()
 	v := i.stack.Pop()
-	i.space.Set(InstructionPointer{location: IPointerLocation{xCoord, yCoord}}, Instruction(v))
+	i.space.Set(
+		InstructionPointer{location: IPointerLocation{xCoord, yCoord}},
+		Instruction(v),
+	)
 }
 
 func (i *Interpreter) DoIo(instruction Instruction) {

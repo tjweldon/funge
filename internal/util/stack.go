@@ -20,7 +20,7 @@ func (s *Stack[T]) Pop() (item T) {
 		return item
 	}
 	*s, item = (*s)[:len(*s)-1], (*s)[len(*s)-1]
-	return item 
+	return item
 }
 
 // Slice returns the underlying slice of the Stack
