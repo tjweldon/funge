@@ -1,18 +1,38 @@
 package main
 
 import (
-	"fmt"
-	"funge/internal/util"
+	"funge/internal/interpreter"
+	"io"
+	"log"
+	"os"
+
+	"github.com/alexflint/go-arg"
 )
 
+func LoadCode(path string) interpreter.FungeSpace {
+	file, err := os.Open(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	data, err := io.ReadAll(file)
+	space := interpreter.MakeSpaceFromBytes(data)
+	//fmt.Println("space")
+	//fmt.Println(space)
+
+	return space
+}
+
+type Cli struct {
+	Code string `arg:"positional" help:"path to the code file" default:"./test.b98"`
+}
+
+var cli Cli
+
+func init() {
+	arg.MustParse(&cli)
+}
+
 func main() {
-	s := util.NewStack[int]()
-	fmt.Println(s)
-	s.Push(100)
-	fmt.Println(s)
-	s.Push(200)
-	t := *&s
-	t.Push(300)
-	fmt.Println(t)
-	fmt.Println(s)
+	interp := interpreter.NewInterpreter(LoadCode(cli.Code))
+	interp.Run()
 }

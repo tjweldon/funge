@@ -1,21 +1,16 @@
 package interpreter
 
-import (
-	"funge/internal/util"
-	"log"
-)
-
 type InstructionId int
 
 const (
-	// default instruction
+	// default Instruction
 	ReadAndPush InstructionId = iota
 
 	// special instructions
 	NoOp       // no operation
 	Stop       // stop execution
-	Skip       // skip the next instruction
-	StringMode // skip the next instruction
+	Skip       // skip the next Instruction
+	StringMode // skip the next Instruction
 
 	// PushZero is equivalent to ReadAndPush 0
 	PushZero  // push 0
@@ -60,17 +55,19 @@ const (
 	ReadInt  // read an integer from stdin, push it
 	ReadChr  // read a character from stdin, push its ascii value
 
+	// Put and Get instructions
+	Put // pop y, x and v, put v at (x, y)
+	Get // pop y and x, push the value at (x, y)
+
 	// no actual instructions after this point
 	instructionCount
 
 	// Instruction Categories
-	SpecialStart = NoOp
-	SpecialEnd   = Skip
 
 	NumericPushStart = PushZero
 	NumericPushEnd   = PushNine
 
-	IPMovementStart = MoveEast
+	IPMovementStart = MoveNorth
 	IPMovementEnd   = MoveRandom
 
 	StackManipulationStart = Duplicate
@@ -79,18 +76,19 @@ const (
 	ArithmeticStart = Add
 	ArithmeticEnd   = Mod
 
-	LogicalStart = GreaterThan
-	LogicalEnd   = Not
-
 	IOStart = PrintInt
 	IOEnd   = ReadChr
 )
 
-// instruction is a single cell in the instruction space
-type instruction rune
+// Instruction is a single cell in the Instruction space
+type Instruction rune
 
-var instructionMap = [instructionCount]instruction{
-	// default instruction
+func (i Instruction) String() string {
+	return string(i)
+}
+
+var instructionMap = [instructionCount]Instruction{
+	// default Instruction
 	ReadAndPush:      '\x00',
 	NoOp:             ' ',
 	Stop:             '@',
@@ -127,6 +125,8 @@ var instructionMap = [instructionCount]instruction{
 	PrintChr:         ',',
 	ReadInt:          '&',
 	ReadChr:          '~',
+	Put:              'p',
+	Get:              'g',
 }
 
 func (id InstructionId) NewDelta(stack *FungeStack) IPointerDelta {
@@ -140,29 +140,32 @@ func (id InstructionId) NewDelta(stack *FungeStack) IPointerDelta {
 	case MoveWest:
 		return West()
 	case MoveEastOrWest:
-		if item, ok := stack.Pop(); !ok {
-			log.Fatal("stack underflow")
-		} else if item != rune(0) {
-			return East()
-		} else {
+		if item := stack.Pop(); item != rune(0) {
 			return West()
+		} else {
+			return East()
 		}
 	case MoveNorthOrSouth:
-		if item, ok := stack.Pop(); !ok {
-			log.Fatal("stack underflow")
-		} else if item != rune(0) {
+		if item := stack.Pop(); item != rune(0) {
 			return North()
 		} else {
 			return South()
 		}
+	case MoveRandom:
+		return Random()
 	}
+	
 
 	return IPointerDelta{}
 }
 
 // Rune returns the rune value associated with this InstructionId
 func (id InstructionId) Rune() rune {
-    return rune(instructionMap[id])
+	return rune(instructionMap[id])
+}
+
+func (id InstructionId) Instruction() Instruction {
+	return Instruction(id.Rune())
 }
 
 var inverseLookup = make(map[rune]InstructionId)
@@ -173,7 +176,7 @@ func init() {
 	}
 }
 
-func GetId(inst instruction) InstructionId {
+func GetId(inst Instruction) InstructionId {
 	id, ok := inverseLookup[rune(inst)]
 	if !ok {
 		return ReadAndPush

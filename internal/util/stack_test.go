@@ -19,9 +19,9 @@ func TestStack_Push(t *testing.T) {
 	if testCase.actual == nil {
 		t.Errorf("actual is nil")
 	}
-	for idx, actualElem := range testCase.want {
-		if testCase.actual.Slice()[idx] != actualElem {
-			t.Errorf("actual[%d] = %d, want %d", idx, testCase.actual.Slice()[idx], actualElem)
+	for idx, expected := range testCase.want {
+		if actual := testCase.actual.Pop(); actual != expected {
+			t.Errorf("actual[%d] = %d, want %d", idx, testCase.actual.Slice()[idx], expected)
 		}
 	}
 }
@@ -35,10 +35,7 @@ func TestStack_Pop(t *testing.T) {
 	}
 
 	for i := len(args) - 1; i >= 0; i-- {
-		item, ok := stack.Pop()
-		if !ok {
-			t.Errorf("stack.Pop() = false, want true")
-		}
+		item := stack.Pop()
 		if item != args[i] {
 			t.Errorf("stack.Pop() = %s, want %s", item, args[i])
 		}
@@ -46,10 +43,10 @@ func TestStack_Pop(t *testing.T) {
 }
 
 func TestStack_Pop_Empty(t *testing.T) {
-	stack := NewStack[string]()
-	_, ok := stack.Pop()
-	if ok {
-		t.Errorf("stack.Pop() = true, want false")
+	stack := NewStack[int]()
+	zero := stack.Pop()
+	if zero != 0 {
+		t.Errorf("stack.Pop() = %d, want 0", zero)
 	}
 }
 
@@ -63,8 +60,8 @@ func TestStack_Clone(t *testing.T) {
 
 	clone := stack.Clone()
 	for range args {
-		cItem, _ := clone.Pop()
-		sItem, _ := stack.Pop()
+		cItem := clone.Pop()
+		sItem := stack.Pop()
 		if cItem != sItem {
 			t.Errorf("clone.Pop() != stack.Pop(), %d != %d", cItem, sItem)
 		}

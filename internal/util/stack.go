@@ -15,12 +15,12 @@ func (s *Stack[T]) Push(item T) {
 
 // Pop pulls the most recently pushed element value from the stack and updates the Stack to
 // remove that element. Pop returns the element it removes from the stack.
-func (s *Stack[T]) Pop() (item T, ok bool) {
+func (s *Stack[T]) Pop() (item T) {
 	if len(*s) == 0 {
-		return item, false
+		return item
 	}
 	*s, item = (*s)[:len(*s)-1], (*s)[len(*s)-1]
-	return item, true
+	return item 
 }
 
 // Slice returns the underlying slice of the Stack
