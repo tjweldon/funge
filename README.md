@@ -18,7 +18,7 @@ go run main.go
 
 in the project directory and it will execute the befunge code.
 
-You can pass a path to any text file as a positional command line argument to the interpreter, the default behavior wiht no arguments is equivalent to
+You can pass a path to any text file as a positional command line argument to the interpreter, the default behavior with no arguments is equivalent to supplying the argument as follows:
 
 ```bash
 go run main.go test.b98
