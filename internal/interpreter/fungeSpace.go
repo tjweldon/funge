@@ -51,6 +51,11 @@ func (fs FungeSpace) Get(pointer InstructionPointer) rune {
 	return rune(fs[pointer.location[y]][pointer.location[x]])
 }
 
+// GetXY returns the rune content of the cell in FungeSpace
+func (fs FungeSpace) GetXY(x, y int) rune {
+	return rune(fs[y][x])
+}
+
 // Set sets the Instruction at the given location
 func (fs FungeSpace) Set(pointer InstructionPointer, instruction Instruction) {
 	fs[pointer.location[y]][pointer.location[x]] = instruction

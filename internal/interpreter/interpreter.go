@@ -18,6 +18,8 @@ const (
 
 type handles [_descriptorCount]io.ReadWriter
 
+const NoLimit int = iota
+
 // Interpreter is the funge VM
 type Interpreter struct {
 	stringMode         bool
@@ -26,6 +28,7 @@ type Interpreter struct {
 	stack              *FungeStack
 	space              FungeSpace
 	ioHandles          handles
+	ticks              int
 }
 
 // NewInterpreter returns a new Interpreter
@@ -40,6 +43,22 @@ func NewInterpreter(code FungeSpace) *Interpreter {
 		// this is the befunge-98 space i.e. the code.
 		space: code,
 	}
+}
+
+// SetHandles allows replacing the stdin and stdout of the interpreter with in-memory io.ReadWriters,
+// or any other io.ReadWriters.
+func (i *Interpreter) SetHandles(in, out io.ReadWriter) {
+	if in != nil {
+		i.ioHandles[Stdin] = in
+	}
+	if out != nil {
+		i.ioHandles[Stdout] = out
+	}
+}
+
+// GetSpace returns the code as a FungeSpace
+func (i *Interpreter) GetSpace() FungeSpace {
+	return i.space
 }
 
 // Pointer returns the current Instruction pointer value
@@ -64,11 +83,15 @@ func (i *Interpreter) Tick() (bool, Instruction) {
 	// update the currentInstruction pointer
 	i.translate()
 
+	// increment the ticks
+	i.ticks++
+
 	return i.stopped, Instruction(currentInstruction)
 }
 
-// Run executes the next Instruction until the interpreter stops.
-func (i *Interpreter) Run() {
+// RunFor executes the next Instruction until the interpreter stops or the tickLimit is reached.
+// A ticks less than or equal to zero is interpreted as no limit on the number of ticks.
+func (i *Interpreter) RunFor(ticks int) {
 	debugFuncs := struct {
 		silent, verbose func(i *Interpreter, ctx ...any)
 	}{
@@ -84,10 +107,14 @@ func (i *Interpreter) Run() {
 		},
 	}
 
-	i.run(debugFuncs.silent)
+	i.run(ticks, debugFuncs.silent)
 }
 
-func (i *Interpreter) run(debugOut func(*Interpreter, ...any)) {
+func (i *Interpreter) Run() {
+	i.RunFor(NoLimit)
+}
+
+func (i *Interpreter) run(ticks int, debugOut func(*Interpreter, ...any)) {
 	var (
 		stopped bool
 		inst    Instruction
@@ -95,6 +122,11 @@ func (i *Interpreter) run(debugOut func(*Interpreter, ...any)) {
 	stopped, inst = i.Tick()
 
 	for !stopped {
+		if ticks > 0 && i.ticks >= ticks {
+			i.ticks = 0
+			break
+		}
+
 		debugOut(i, inst)
 		stopped, inst = i.Tick()
 	}

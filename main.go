@@ -2,6 +2,7 @@ package main
 
 import (
 	"funge/internal/interpreter"
+	"funge/internal/visual"
 	"io"
 	"log"
 	"os"
@@ -34,5 +35,7 @@ func init() {
 
 func main() {
 	interp := interpreter.NewInterpreter(LoadCode(cli.Code))
-	interp.Run()
+
+	visual.Visualise(interp)
+	//interp.Run()
 }
