@@ -5,6 +5,7 @@ import (
 	"funge/internal/interpreter"
 	"funge/internal/util"
 	"image/color"
+	"time"
 
 	"github.com/go-p5/p5"
 )
@@ -26,6 +27,7 @@ func setup(interp *interpreter.Interpreter) func() {
 
 	w, h = dimensions[0]*cellWH, dimensions[1]*cellWH
 	w *= 2
+    h = util.Max(w/2, h)
 
 	interp.SetHandles(nil, &outBuf)
 
@@ -42,13 +44,14 @@ func draw(interp *interpreter.Interpreter) func() {
 	// render a frame
 	space := interp.GetSpace()
 	offsets := struct{ X, Y float64 }{
-		X: float64(cellWH) / 2,
-		Y: float64(cellWH) / 2,
+		X: float64(cellWH),
+		Y: float64(cellWH),
 	}
 
 	renderFunc := func() {
 		// do a tick
 		interp.RunFor(1)
+        time.Sleep(time.Second/2)
 
 		pointer := interp.Pointer()
 		location := pointer.Location()
@@ -58,7 +61,7 @@ func draw(interp *interpreter.Interpreter) func() {
 		p5.Fill(color.RGBA{G: 128, A: 255})
 		p5.Rect(
 			float64(cellWH)*float64(location[0]),
-			float64(cellWH)*float64(location[1]),
+			float64(cellWH)*float64(location[1]) + offsets.Y/4,
 			float64(cellWH),
 			float64(cellWH),
 		)
@@ -67,8 +70,8 @@ func draw(interp *interpreter.Interpreter) func() {
 
 		// draw the stdout
 		p5.Text(
-			util.WrapString(outBuf.String(), 30),
-			float64(w/2),
+            util.WrapString("Stdout: " + outBuf.String(), 30),
+			float64(w/2)+2*offsets.X,
 			float64(cellWH),
 		)
 

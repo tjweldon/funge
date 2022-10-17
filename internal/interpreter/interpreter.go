@@ -130,7 +130,6 @@ func (i *Interpreter) run(ticks int, debugOut func(*Interpreter, ...any)) {
 		debugOut(i, inst)
 		stopped, inst = i.Tick()
 	}
-	fmt.Println("Done!")
 }
 
 func (i *Interpreter) translate() {

@@ -17,8 +17,6 @@ func LoadCode(path string) interpreter.FungeSpace {
 	}
 	data, err := io.ReadAll(file)
 	space := interpreter.MakeSpaceFromBytes(data)
-	//fmt.Println("space")
-	//fmt.Println(space)
 
 	return space
 }
