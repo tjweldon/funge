@@ -3,7 +3,7 @@ package visual
 import (
 	"bytes"
 	"funge/internal/interpreter"
-	"funge/internal/util"
+	"gioui.org/text"
 	"image/color"
 
 	"github.com/go-p5/p5"
@@ -15,9 +15,16 @@ func Visualise(interp *interpreter.Interpreter) {
 	p5.Run(setup(interp), draw(interp))
 }
 
-const cellWH = 32
+const cellWH = 64
 
 var w, h int32
+
+var font text.Font
+
+func init() {
+
+	p5.TextFont(font)
+}
 
 func setup(interp *interpreter.Interpreter) func() {
 	// set up the canvas
@@ -41,10 +48,9 @@ func draw(interp *interpreter.Interpreter) func() {
 
 	// render a frame
 	space := interp.GetSpace()
-	offsets := struct{ X, Y float64 }{
-		X: float64(cellWH) / 2,
-		Y: float64(cellWH) / 2,
-	}
+
+	grid := NewGrid(float64(cellWH), float64(cellWH), space)
+	grid.UseOffset(float64(cellWH)/2.0, float64(cellWH)/2.0)
 
 	renderFunc := func() {
 		// do a tick
@@ -54,34 +60,90 @@ func draw(interp *interpreter.Interpreter) func() {
 		location := pointer.Location()
 
 		// draw where the instruction pointer is
-		p5.StrokeWidth(0)
-		p5.Fill(color.RGBA{G: 128, A: 255})
-		p5.Rect(
-			float64(cellWH)*float64(location[0]),
-			float64(cellWH)*float64(location[1]),
-			float64(cellWH),
-			float64(cellWH),
-		)
+		grid.FillCell(location, color.RGBA{R: 0, G: 255, B: 0, A: 255})
 
-		p5.TextSize(24)
-
-		// draw the stdout
-		p5.Text(
-			util.WrapString(outBuf.String(), 30),
-			float64(w/2),
-			float64(cellWH),
-		)
-
-		// draw the code
-		for y, line := range space {
-			yCanvas := float64(cellWH)*float64(y) + offsets.Y
-			for x, inst := range line {
-				xCanvas := float64(cellWH)*float64(x) + offsets.X
-
-				p5.Text(string(inst), xCanvas, yCanvas)
-			}
-		}
+		p5.TextSize(cellWH / 2)
+		grid.DrawBackground()
+		grid.DrawContent()
 	}
 
 	return renderFunc
+}
+
+type Grid struct {
+	cellWidth, cellHeight float64
+	offsetX, offsetY      float64
+	content               interpreter.FungeSpace
+}
+
+func NewGrid(cellWidth, cellHeight float64, content interpreter.FungeSpace) *Grid {
+	return &Grid{
+		cellWidth:  cellWidth,
+		cellHeight: cellHeight,
+		content:    content,
+	}
+}
+
+func (g *Grid) SetContent(content interpreter.FungeSpace) {
+	g.content = content
+}
+
+func (g *Grid) UseOffset(offsetX, offsetY float64) {
+	g.offsetX = offsetX
+	g.offsetY = offsetY
+}
+
+func (g *Grid) DrawBackground() {
+	p5.StrokeWidth(2)
+	p5.Stroke(color.RGBA{R: 128, G: 128, B: 128, A: 255})
+
+	// draw horizontal lines
+	for y := 0; y < len(g.content); y++ {
+		start := [2]float64{
+			0,                         // x
+			g.cellHeight * float64(y), // y
+		}
+
+		end := [2]float64{
+			g.cellWidth * float64(len(g.content[y])), // x
+			g.cellHeight * float64(y),                // y
+		}
+
+		p5.Line(start[0], start[1], end[0], end[1])
+	}
+
+	// draw vertical lines
+	for x := 0; x < len(g.content[0]); x++ {
+		start := [2]float64{
+			g.cellWidth * float64(x), // x
+			0,                        // y
+		}
+
+		end := [2]float64{
+			g.cellWidth * float64(x),               // x
+			g.cellHeight * float64(len(g.content)), // y
+		}
+
+		p5.Line(start[0], start[1], end[0], end[1])
+	}
+}
+
+func (g *Grid) DrawContent() {
+	// draw the code
+	for y, line := range g.content {
+		yCanvas := g.cellHeight*float64(y) + g.offsetY
+		for x, inst := range line {
+			xCanvas := g.cellWidth*float64(x) + g.offsetX
+
+			p5.Text(string(inst), xCanvas, yCanvas)
+		}
+	}
+}
+
+func (g *Grid) FillCell(location interpreter.IPointerLocation, col color.Color) {
+	xCanvas := g.cellWidth * float64(location[0])
+	yCanvas := g.cellHeight * float64(location[1])
+
+	p5.Fill(col)
+	p5.Rect(xCanvas, yCanvas, g.cellWidth, g.cellHeight)
 }
