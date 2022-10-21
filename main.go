@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
 
 	"github.com/alexflint/go-arg"
 )
@@ -17,8 +18,6 @@ func LoadCode(path string) interpreter.FungeSpace {
 	}
 	data, err := io.ReadAll(file)
 	space := interpreter.MakeSpaceFromBytes(data)
-	//fmt.Println("space")
-	//fmt.Println(space)
 
 	return space
 }
@@ -37,5 +36,6 @@ func main() {
 	interp := interpreter.NewInterpreter(LoadCode(cli.Code))
 
 	visual.Visualise(interp)
-	//interp.Run()
+	time.Sleep(10 * time.Second)
+	// interp.Run()
 }
