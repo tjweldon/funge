@@ -2,7 +2,7 @@ package visual
 
 import (
 	"funge/internal/interpreter"
-	"github.com/go-p5/p5"
+	"github.com/tjweldon/p5"
 	"image/color"
 )
 
@@ -22,8 +22,8 @@ type Stack struct {
 
 func NewStack(maxItems int, stackChan <-chan interpreter.FungeStack) *Stack {
 	return &Stack{
-		w:         cellWH,
-		h:         cellWH * maxItems,
+		w:         cellWH.Int(),
+		h:         cellWH.Int() * maxItems,
 		maxItems:  maxItems,
 		stackChan: stackChan,
 	}
@@ -36,7 +36,7 @@ func (s *Stack) UseOffset(offsetX, offsetY float64) {
 
 func (s *Stack) DrawBackground() {
 	for i := 0; i < s.maxItems; i++ {
-		p5.Line(0, float64(i*cellWH), float64(s.w), float64(i*cellWH))
+		p5.Line(0, float64(i*cellWH.Int()), float64(s.w), float64(i*cellWH.Int()))
 	}
 }
 
@@ -65,8 +65,8 @@ func (s *Stack) DrawContent() {
 	for i, item := range display {
 		p5.Text(
 			string(item),
-			s.offsets[xAxis],                   // just the offset
-			float64(i*cellWH)+s.offsets[yAxis], // cell height + offset
+			s.offsets[xAxis], // just the offset
+			float64(i*cellWH.Int())+s.offsets[yAxis], // cell height + offset
 		)
 	}
 }

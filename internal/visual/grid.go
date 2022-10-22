@@ -2,23 +2,42 @@ package visual
 
 import (
 	"funge/internal/interpreter"
-	"github.com/go-p5/p5"
 	"image/color"
+	"log"
+
+	"github.com/tjweldon/p5"
 )
 
 // Grid is the renderer for the FungeSpace and instruction pointer
 type Grid struct {
+	*p5.Proc
+	w, h                  int
 	cellWidth, cellHeight float64
 	offsetX, offsetY      float64
 	content               interpreter.FungeSpace
+	interChan             <-chan interpreter.Interpreter
 }
 
 // NewGrid creates a new Grid renderer
-func NewGrid(cellWidth, cellHeight float64) *Grid {
-	return &Grid{
+func NewGrid(cellWidth, cellHeight float64, initial *interpreter.Interpreter) *Grid {
+	log.Println("NewGrid: args:", cellWidth, cellHeight, initial)
+	g := &Grid{
 		cellWidth:  cellWidth,
 		cellHeight: cellHeight,
 	}
+	space := initial.GetSpace()
+	dimensions := space.Size()
+	w, h = dimensions[0]*cellWH.Int32(), dimensions[1]*cellWH.Int32()
+
+	g.Proc = p5.NewProc(int(w), int(h))
+	g.Setup = g.setupGrid(initial)
+	g.Draw = g.drawGrid()
+
+	return g
+}
+
+func (g *Grid) SetIncoming(incoming <-chan interpreter.Interpreter) {
+	g.interChan = incoming
 }
 
 // SetContent sets the FungeSpace to be rendered
@@ -34,8 +53,8 @@ func (g *Grid) UseOffset(offsetX, offsetY float64) {
 
 // DrawBackground draws the background of grid lines
 func (g *Grid) DrawBackground() {
-	p5.StrokeWidth(2)
-	p5.Stroke(color.RGBA{R: 128, G: 128, B: 128, A: 255})
+	g.StrokeWidth(2)
+	g.Stroke(color.RGBA{R: 128, G: 128, B: 128, A: 255})
 
 	// drawGrid horizontal lines
 	for y := 0; y < len(g.content); y++ {
@@ -49,7 +68,7 @@ func (g *Grid) DrawBackground() {
 			g.cellHeight * float64(y),                // y
 		}
 
-		p5.Line(start[0], start[1], end[0], end[1])
+		g.Line(start[0], start[1], end[0], end[1])
 	}
 
 	// drawGrid vertical lines
@@ -64,7 +83,7 @@ func (g *Grid) DrawBackground() {
 			g.cellHeight * float64(len(g.content)), // y
 		}
 
-		p5.Line(start[0], start[1], end[0], end[1])
+		g.Line(start[0], start[1], end[0], end[1])
 	}
 }
 
@@ -76,7 +95,7 @@ func (g *Grid) DrawContent() {
 		for x, inst := range line {
 			xCanvas := g.cellWidth*float64(x) + g.offsetX
 
-			p5.Text(string(inst), xCanvas, yCanvas)
+			g.Text(string(inst), xCanvas, yCanvas)
 		}
 	}
 }
@@ -86,45 +105,44 @@ func (g *Grid) FillCell(location interpreter.IPointerLocation, col color.Color) 
 	xCanvas := g.cellWidth * float64(location[0])
 	yCanvas := g.cellHeight * float64(location[1])
 
-	p5.Fill(col)
-	p5.Rect(xCanvas, yCanvas, g.cellWidth, g.cellHeight)
+	g.Fill(col)
+	g.Rect(xCanvas, yCanvas, g.cellWidth, g.cellHeight)
 }
 
-func setupGrid(interp *interpreter.Interpreter) func() {
+func (g *Grid) setupGrid(interp *interpreter.Interpreter) func() {
 	// set up the canvas
 	space := interp.GetSpace()
 	dimensions := space.Size()
 
-	w, h = dimensions[0]*cellWH, dimensions[1]*cellWH
+	w, h = dimensions[0]*cellWH.Int32(), dimensions[1]*cellWH.Int32()
 
 	interp.SetHandles(nil, &outBuf)
 
 	setupFunc := func() {
-		p5.Canvas(int(w), int(h))
-		p5.Background(color.White)
+		g.Canvas(int(w), int(h))
+		g.Background(color.White)
 	}
 
 	return setupFunc
 }
 
-func drawGrid(interChan <-chan interpreter.Interpreter) func() {
+func (g *Grid) drawGrid() func() {
 
-	grid := NewGrid(float64(cellWH), float64(cellWH))
-	grid.UseOffset(0.3*float64(cellWH), -0.25*float64(cellWH))
+	g.UseOffset(0.3*float64(cellWH), -0.25*float64(cellWH))
 
 	renderFunc := func() {
 		// do a tick
-		inter := <-interChan
-		grid.SetContent(inter.GetSpace())
+		inter := <-g.interChan
+		g.SetContent(inter.GetSpace())
 
 		pointer := inter.Pointer()
 		location := pointer.Location()
 
 		// drawGrid where the instruction pointer is
-		grid.FillCell(location, color.RGBA{R: 0, G: 255, B: 0, A: 255})
-		p5.TextSize(cellWH / 1.5)
-		grid.DrawBackground()
-		grid.DrawContent()
+		g.FillCell(location, color.RGBA{R: 0, G: 255, B: 0, A: 255})
+		g.TextSize(cellWH.Float() / 1.5)
+		g.DrawBackground()
+		g.DrawContent()
 	}
 
 	return renderFunc

@@ -3,14 +3,22 @@ package visual
 import (
 	"bytes"
 	"funge/internal/interpreter"
-	"gioui.org/text"
-	"github.com/go-p5/p5"
+	"log"
 	"time"
+
+	"gioui.org/text"
+	"github.com/tjweldon/p5"
 )
 
 var outBuf bytes.Buffer
 
-const cellWH = 32
+type flint int
+
+func (f flint) Float() float64 { return float64(f) }
+func (f flint) Int() int       { return int(f) }
+func (f flint) Int32() int32   { return int32(f) }
+
+const cellWH flint = 32
 
 var w, h int32
 
@@ -28,12 +36,19 @@ func init() {
 }
 
 func Visualise(inter *interpreter.Interpreter) {
+	log.Println("Visualise: inter", inter)
 	interChan := make(chan interpreter.Interpreter)
-	go p5.Run(setupGrid(inter), drawGrid(interChan))
+	grid := NewGrid(cellWH.Float(), cellWH.Float(), inter)
+	grid.SetIncoming(interChan)
 
-	for {
-		interChan <- *inter
-		inter.RunFor(1)
-		time.Sleep(100 * time.Millisecond)
-	}
+	go func(ic chan<- interpreter.Interpreter) {
+		for {
+			ic <- *inter
+			inter.RunFor(1)
+			time.Sleep(100 * time.Millisecond)
+		}
+	}(interChan)
+
+	go grid.Run()
+	time.Sleep(10 * time.Second)
 }

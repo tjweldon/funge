@@ -35,6 +35,7 @@ func init() {
 func main() {
 	interp := interpreter.NewInterpreter(LoadCode(cli.Code))
 
+	log.Println("main: interp:", interp)
 	visual.Visualise(interp)
 	time.Sleep(10 * time.Second)
 	// interp.Run()
