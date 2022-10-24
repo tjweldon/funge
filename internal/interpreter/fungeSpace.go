@@ -70,10 +70,10 @@ func (fs FungeSpace) String() string {
 	return strings.Join(lines, "\n")
 }
 
-func (fs FungeSpace) Size() (size tuple[int32]) {
-	size = tuple[int32]{
-		x: int32(len(fs[0])),
-		y: int32(len(fs)),
+func (fs FungeSpace) Size() (size tuple[int]) {
+	size = tuple[int]{
+		x: int(len(fs[0])),
+		y: int(len(fs)),
 	}
 
 	return size

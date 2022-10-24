@@ -1,9 +1,11 @@
 package visual
 
 import (
+	"fmt"
 	"funge/internal/interpreter"
-	"github.com/tjweldon/p5"
 	"image/color"
+
+	"github.com/tjweldon/p5"
 )
 
 type axis int
@@ -15,18 +17,26 @@ const (
 )
 
 type Stack struct {
+	*p5.Proc
 	w, h, maxItems int
 	stackChan      <-chan interpreter.FungeStack
 	offsets        [_numAxes]float64
 }
 
 func NewStack(maxItems int, stackChan <-chan interpreter.FungeStack) *Stack {
-	return &Stack{
-		w:         cellWH.Int(),
+	s := &Stack{
+		w:         cellWH.Int() * 2,
 		h:         cellWH.Int() * maxItems,
 		maxItems:  maxItems,
 		stackChan: stackChan,
+		offsets:   [_numAxes]float64{},
 	}
+
+	s.Proc = p5.NewProc(s.w, s.h)
+	s.Setup = s.getSetup()
+	s.Draw = s.getDraw()
+
+	return s
 }
 
 func (s *Stack) UseOffset(offsetX, offsetY float64) {
@@ -35,22 +45,28 @@ func (s *Stack) UseOffset(offsetX, offsetY float64) {
 }
 
 func (s *Stack) DrawBackground() {
+	s.Stroke(color.Black)
+	s.StrokeWidth(2)
 	for i := 0; i < s.maxItems; i++ {
-		p5.Line(0, float64(i*cellWH.Int()), float64(s.w), float64(i*cellWH.Int()))
+		s.Line(0, float64(i*cellWH.Int()), float64(s.w), float64(i*cellWH.Int()))
 	}
 }
 
-func (s *Stack) Setup() {
-	p5.Canvas(s.w, s.h)
-	p5.Background(color.White)
-	s.DrawBackground()
+func (s *Stack) getSetup() func() {
+	s.UseOffset(0.3*cellWH.Float(), -0.25*cellWH.Float())
+	return func() {
+		s.Background(color.White)
+	}
 }
 
 func (s *Stack) DrawContent() {
-	stack := <-s.stackChan
+	stack, ok := <-s.stackChan
+	if !ok {
+		return
+	}
 	display := make([]rune, s.maxItems)
 	for i := 0; i < s.maxItems; i++ {
-		display[i] = ' '
+		display[i] = 0
 	}
 
 	if len(stack.Slice()) > s.maxItems {
@@ -61,12 +77,27 @@ func (s *Stack) DrawContent() {
 		copy(display, stack.Slice())
 	}
 
-	copy(display, stack.Slice())
+	s.TextSize(cellWH.Float() / 1.5)
 	for i, item := range display {
-		p5.Text(
-			string(item),
+		var text string
+		if item <= 0 {
+			text = ""
+		} else if item < ' ' {
+			text = fmt.Sprintf("%x", item)
+		} else {
+			text = string(item)
+		}
+		s.Text(
+			text,
 			s.offsets[xAxis], // just the offset
-			float64(i*cellWH.Int())+s.offsets[yAxis], // cell height + offset
+			float64(s.h)-float64(i*cellWH.Int())+s.offsets[yAxis], // cell height + offset from the bottom
 		)
+	}
+}
+
+func (s *Stack) getDraw() func() {
+	return func() {
+		s.DrawBackground()
+		s.DrawContent()
 	}
 }

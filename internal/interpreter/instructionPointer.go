@@ -21,11 +21,14 @@ const (
 // the Instruction pointer.
 type tuple[T util.Numeric] [_numCoords]T
 
+// IPointerDelta represents the direction of the current Instruction to be interpreted
+type IPointerDelta tuple[int]
+
 // IPointerLocation represents the location of the current Instruction to be interpreted
-type IPointerLocation tuple[int32]
+type IPointerLocation tuple[int]
 
 // Translate returns a new IPointerLocation translated by the given tuple
-func (i IPointerLocation) Translate(delta IPointerDelta, size tuple[int32]) IPointerLocation {
+func (i IPointerLocation) Translate(delta IPointerDelta, size tuple[int]) IPointerLocation {
 	result := IPointerLocation{}
 	for idx := range result {
 		result[idx] = (i[idx] + delta[idx]) % size[idx]
@@ -33,9 +36,6 @@ func (i IPointerLocation) Translate(delta IPointerDelta, size tuple[int32]) IPoi
 
 	return result
 }
-
-// IPointerDelta represents the direction of the current Instruction to be interpreted
-type IPointerDelta tuple[int32]
 
 // constructors for cardinal directions
 
@@ -61,11 +61,11 @@ func Random() IPointerDelta {
 type InstructionPointer struct {
 	location IPointerLocation
 	delta    IPointerDelta
-	size     tuple[int32]
+	size     tuple[int]
 }
 
 // newInstructionPointer returns a new Instruction pointer at (0, 0) with delta (0, 1)
-func newInstructionPointer(size tuple[int32]) *InstructionPointer {
+func newInstructionPointer(size tuple[int]) *InstructionPointer {
 	return &InstructionPointer{
 		location: IPointerLocation{0, 0},
 		delta:    East(),

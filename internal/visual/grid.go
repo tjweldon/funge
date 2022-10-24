@@ -27,7 +27,7 @@ func NewGrid(cellWidth, cellHeight float64, initial *interpreter.Interpreter) *G
 	}
 	space := initial.GetSpace()
 	dimensions := space.Size()
-	w, h = dimensions[0]*cellWH.Int32(), dimensions[1]*cellWH.Int32()
+	w, h := dimensions[0]*cellWH.Int(), dimensions[1]*cellWH.Int()
 
 	g.Proc = p5.NewProc(int(w), int(h))
 	g.Setup = g.setupGrid(initial)
@@ -114,7 +114,7 @@ func (g *Grid) setupGrid(interp *interpreter.Interpreter) func() {
 	space := interp.GetSpace()
 	dimensions := space.Size()
 
-	w, h = dimensions[0]*cellWH.Int32(), dimensions[1]*cellWH.Int32()
+	w, h := dimensions[0]*cellWH.Int(), dimensions[1]*cellWH.Int()
 
 	interp.SetHandles(nil, &outBuf)
 
@@ -128,11 +128,14 @@ func (g *Grid) setupGrid(interp *interpreter.Interpreter) func() {
 
 func (g *Grid) drawGrid() func() {
 
-	g.UseOffset(0.3*float64(cellWH), -0.25*float64(cellWH))
+	g.UseOffset(0.3*cellWH.Float(), 0.75*cellWH.Float())
 
 	renderFunc := func() {
 		// do a tick
-		inter := <-g.interChan
+		inter, ok := <-g.interChan
+		if !ok {
+			return
+		}
 		g.SetContent(inter.GetSpace())
 
 		pointer := inter.Pointer()

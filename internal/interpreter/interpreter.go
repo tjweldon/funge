@@ -2,7 +2,6 @@ package interpreter
 
 import (
 	"fmt"
-	"funge/internal/util"
 	"io"
 	"log"
 	"os"
@@ -61,14 +60,19 @@ func (i *Interpreter) GetSpace() FungeSpace {
 	return i.space
 }
 
+// IsStopped returns the true if the end of the program has been reached
+func (i *Interpreter) IsStopped() bool {
+	return i.stopped
+}
+
 // Pointer returns the current Instruction pointer value
 func (i *Interpreter) Pointer() InstructionPointer {
 	return *i.instructionPointer
 }
 
 // Stack returns a clone of the stack
-func (i *Interpreter) Stack() *util.Stack[rune] {
-	return i.stack.Clone()
+func (i *Interpreter) Stack() FungeStack {
+	return FungeStack{i.stack.Clone()}
 }
 
 // Tick executes the next Instruction and updates the Instruction pointer.
@@ -204,7 +208,7 @@ func (i *Interpreter) get() {
 	xCoord := i.stack.Pop()
 	i.stack.Push(
 		i.space.Get(
-			InstructionPointer{location: IPointerLocation{xCoord, yCoord}},
+			InstructionPointer{location: IPointerLocation{int(xCoord), int(yCoord)}},
 		),
 	)
 }
@@ -214,7 +218,7 @@ func (i *Interpreter) put() {
 	xCoord := i.stack.Pop()
 	v := i.stack.Pop()
 	i.space.Set(
-		InstructionPointer{location: IPointerLocation{xCoord, yCoord}},
+		InstructionPointer{location: IPointerLocation{int(xCoord), int(yCoord)}},
 		Instruction(v),
 	)
 }
