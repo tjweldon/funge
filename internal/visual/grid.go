@@ -1,11 +1,9 @@
 package visual
 
 import (
-	"funge/internal/interpreter"
-	"image/color"
-	"log"
-
+	"funge/internal/vm"
 	"github.com/tjweldon/p5"
+	"image/color"
 )
 
 // Grid is the renderer for the FungeSpace and instruction pointer
@@ -14,13 +12,12 @@ type Grid struct {
 	w, h                  int
 	cellWidth, cellHeight float64
 	offsetX, offsetY      float64
-	content               interpreter.FungeSpace
-	interChan             <-chan interpreter.Interpreter
+	content               vm.FungeSpace
+	interChan             <-chan vm.Interpreter
 }
 
 // NewGrid creates a new Grid renderer
-func NewGrid(cellWidth, cellHeight float64, initial *interpreter.Interpreter) *Grid {
-	log.Println("NewGrid: args:", cellWidth, cellHeight, initial)
+func NewGrid(cellWidth, cellHeight float64, initial *vm.Interpreter) *Grid {
 	g := &Grid{
 		cellWidth:  cellWidth,
 		cellHeight: cellHeight,
@@ -36,12 +33,12 @@ func NewGrid(cellWidth, cellHeight float64, initial *interpreter.Interpreter) *G
 	return g
 }
 
-func (g *Grid) SetIncoming(incoming <-chan interpreter.Interpreter) {
+func (g *Grid) SetIncoming(incoming <-chan vm.Interpreter) {
 	g.interChan = incoming
 }
 
 // SetContent sets the FungeSpace to be rendered
-func (g *Grid) SetContent(content interpreter.FungeSpace) {
+func (g *Grid) SetContent(content vm.FungeSpace) {
 	g.content = content
 }
 
@@ -101,7 +98,7 @@ func (g *Grid) DrawContent() {
 }
 
 // FillCell fills the cell specified by the location with the given colour
-func (g *Grid) FillCell(location interpreter.IPointerLocation, col color.Color) {
+func (g *Grid) FillCell(location vm.IPointerLocation, col color.Color) {
 	xCanvas := g.cellWidth * float64(location[0])
 	yCanvas := g.cellHeight * float64(location[1])
 
@@ -109,14 +106,12 @@ func (g *Grid) FillCell(location interpreter.IPointerLocation, col color.Color) 
 	g.Rect(xCanvas, yCanvas, g.cellWidth, g.cellHeight)
 }
 
-func (g *Grid) setupGrid(interp *interpreter.Interpreter) func() {
+func (g *Grid) setupGrid(interp *vm.Interpreter) func() {
 	// set up the canvas
 	space := interp.GetSpace()
 	dimensions := space.Size()
 
 	w, h := dimensions[0]*cellWH.Int(), dimensions[1]*cellWH.Int()
-
-	interp.SetHandles(nil, &outBuf)
 
 	setupFunc := func() {
 		g.Canvas(int(w), int(h))

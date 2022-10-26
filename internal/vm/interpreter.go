@@ -1,4 +1,4 @@
-package interpreter
+package vm
 
 import (
 	"fmt"
@@ -101,17 +101,11 @@ func (i *Interpreter) RunFor(ticks int) {
 	}{
 		silent: func(*Interpreter, ...any) {},
 		verbose: func(i *Interpreter, ctx ...any) {
-			fmt.Println("instruction", ctx)
-			fmt.Println("AFTER TICK")
-			fmt.Println("pointer", i.instructionPointer.location)
-			fmt.Println("delta", i.instructionPointer.delta)
-			fmt.Println("stack", i.stack.Slice())
-			fmt.Println("stringMode", i.stringMode)
-			fmt.Println()
+			log.Printf("stdout handle: %T\n", i.ioHandles[Stdout])
 		},
 	}
 
-	i.run(ticks, debugFuncs.silent)
+	i.run(ticks, debugFuncs.verbose)
 }
 
 func (i *Interpreter) Run() {

@@ -2,7 +2,7 @@ package visual
 
 import (
 	"fmt"
-	"funge/internal/interpreter"
+	"funge/internal/vm"
 	"image/color"
 
 	"github.com/tjweldon/p5"
@@ -19,11 +19,11 @@ const (
 type Stack struct {
 	*p5.Proc
 	w, h, maxItems int
-	stackChan      <-chan interpreter.FungeStack
+	stackChan      <-chan vm.FungeStack
 	offsets        [_numAxes]float64
 }
 
-func NewStack(maxItems int, stackChan <-chan interpreter.FungeStack) *Stack {
+func NewStack(maxItems int, stackChan <-chan vm.FungeStack) *Stack {
 	s := &Stack{
 		w:         cellWH.Int() * 2,
 		h:         cellWH.Int() * maxItems,
@@ -83,7 +83,7 @@ func (s *Stack) DrawContent() {
 		if item <= 0 {
 			text = ""
 		} else if item < ' ' {
-			text = fmt.Sprintf("%x", item)
+			text = fmt.Sprintf("0x%0x", item)
 		} else {
 			text = string(item)
 		}

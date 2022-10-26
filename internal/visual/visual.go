@@ -1,30 +1,23 @@
 package visual
 
 import (
-	"bytes"
-	"fmt"
-	"funge/internal/interpreter"
-	"log"
+	"funge/internal/vm"
 	"time"
 
 	"gioui.org/text"
 	"github.com/tjweldon/p5"
 )
 
-var outBuf bytes.Buffer
-
+// flint is just a bit of syntactic sugar for casting
 type flint int
 
 func (f flint) Float() float64 { return float64(f) }
 func (f flint) Int() int       { return int(f) }
-func (f flint) Int32() int32   { return int32(f) }
 
 const cellWH flint = 64
 
-var font text.Font
-
-func init() {
-	p5.TextFont(
+func initFont(p *p5.Proc) {
+	p.TextFont(
 		text.Font{
 			Typeface: "",
 			Variant:  "Mono",
@@ -34,55 +27,46 @@ func init() {
 	)
 }
 
-func Visualise(inter *interpreter.Interpreter) {
-	log.Println("Visualise: inter", inter)
-
-	// runInterpreter is the befunge code execution goroutine
+func Visualise(inter *vm.Interpreter, cycleDuration time.Duration) {
+	// runInterpreter is the befunge code vm 'runtime'
 	runInterpreter := func(
-		ic chan<- interpreter.Interpreter,
-		sc chan<- interpreter.FungeStack,
-		kill chan<- struct{},
+		clock <-chan time.Time, // vm clock, one op per tick
+		ic chan<- vm.Interpreter, // interpreter state output
+		sc chan<- vm.FungeStack, // stack state output
 	) {
 		defer func() {
 			close(ic)
 			close(sc)
-			close(kill)
 		}()
-		for {
+		for range clock {
+			inter.RunFor(1)
 			ic <- *inter
 			sc <- inter.Stack()
-			inter.RunFor(1)
 			if inter.IsStopped() {
-				kill <- struct{}{}
 				return
 			}
-			time.Sleep(100 * time.Millisecond)
 		}
 	}
 
-	// make interChan and supply to grid on instantiation
-	interChan := make(chan interpreter.Interpreter)
+	// make interChan and supply to grid using setter injection
+	interChan := make(chan vm.Interpreter)
 	grid := NewGrid(cellWH.Float(), cellWH.Float(), inter)
 	grid.SetIncoming(interChan)
+	initFont(grid.Proc)
 
 	// make stackChan and supply to stack on instantiation
-	stackChan := make(chan interpreter.FungeStack)
+	stackChan := make(chan vm.FungeStack)
 	stack := NewStack(5, stackChan)
+	initFont(stack.Proc)
 
-	// make completion signal channel
-	done := make(chan struct{})
-
-	// start the interpreter goroutine
-	go runInterpreter(interChan, stackChan, done)
+	// make the clock tick according to the passed cycle time
+	clock := time.NewTicker(cycleDuration)
+	defer clock.Stop()
 
 	// start the visualisation goroutines
 	go grid.Run()
 	go stack.Run()
 
-	// let it run until execution completes
-	select {
-	case <-done:
-		fmt.Println("Program complete!")
-		return
-	}
+	// let the funge vm run until execution completes (or forever)
+	runInterpreter(clock.C, interChan, stackChan)
 }
